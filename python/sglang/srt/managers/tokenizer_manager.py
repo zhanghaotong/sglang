@@ -16,6 +16,7 @@
 import asyncio
 import copy
 import dataclasses
+import json
 import logging
 import math
 import os
@@ -85,7 +86,7 @@ from sglang.srt.server_args import (
     set_global_server_args_for_tokenizer,
 )
 from sglang.srt.speculative.spec_info import SpeculativeAlgorithm
-from sglang.srt.tracing.trace import extract_trace_headers
+from sglang.srt.tracing.trace import SpanAttributes, extract_trace_headers
 from sglang.srt.tracing.trace_metric_wrapper import (
     RequestStage,
     TraceMetricContext,
@@ -1687,7 +1688,10 @@ class TokenizerManager(TokenizerCommunicatorMixin):
                     self._calculate_timing_metrics(meta_info, state, recv_obj, i)
 
                 trace_metric_ctx = global_get_trace_metric_ctx(rid)
-                trace_metric_ctx.trace_req_finish(ts=int(state.finished_time * 1e9))
+                trace_metric_ctx.trace_req_finish(
+                    ts=int(state.finished_time * 1e9),
+                    attrs=self.convert_to_span_attrs(state, recv_obj, i),
+                )
                 global_del_trace_metric_ctx(rid)
 
                 del self.rid_to_state[rid]
@@ -2490,6 +2494,95 @@ class TokenizerManager(TokenizerCommunicatorMixin):
                     RequestStage.ANONYMOUS,
                     ts=int(created_time * 1e9),
                 )
+
+    def convert_to_span_attrs(
+        self,
+        state: ReqState,
+        recv_obj: Union[
+            BatchStrOutput,
+            BatchEmbeddingOutput,
+            BatchMultimodalOutput,
+            BatchTokenIDOutput,
+        ],
+        i: int,
+    ) -> Dict[str, Any]:
+        """Convert attributes to span attributes."""
+        span_attrs = {}
+
+        # Token usage attributes
+        span_attrs[SpanAttributes.GEN_AI_USAGE_COMPLETION_TOKENS] = (
+            recv_obj.completion_tokens[i]
+        )
+        span_attrs[SpanAttributes.GEN_AI_USAGE_PROMPT_TOKENS] = recv_obj.prompt_tokens[
+            i
+        ]
+        span_attrs[SpanAttributes.GEN_AI_USAGE_CACHED_TOKENS] = recv_obj.cached_tokens[
+            i
+        ]
+
+        # Request identifiers
+        span_attrs[SpanAttributes.GEN_AI_REQUEST_ID] = (
+            str(state.obj.rid) if state.obj.rid else None
+        )
+
+        # Sampling parameters
+        sampling_params = state.obj.sampling_params or {}
+
+        if max_new_tokens := sampling_params.get("max_new_tokens"):
+            span_attrs[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] = max_new_tokens
+
+        if top_p := sampling_params.get("top_p"):
+            span_attrs[SpanAttributes.GEN_AI_REQUEST_TOP_P] = top_p
+
+        if temperature := sampling_params.get("temperature"):
+            span_attrs[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] = temperature
+
+        if top_k := sampling_params.get("top_k"):
+            span_attrs[SpanAttributes.GEN_AI_REQUEST_TOP_K] = top_k
+
+        if n := sampling_params.get("n"):
+            span_attrs[SpanAttributes.GEN_AI_REQUEST_N] = n
+
+        # Response attributes
+        span_attrs[SpanAttributes.GEN_AI_RESPONSE_MODEL] = self.served_model_name
+
+        finish_reason = (
+            recv_obj.finished_reasons[i].get("type")
+            if recv_obj.finished_reasons[i]
+            else None
+        )
+        if finish_reason:
+            span_attrs[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASONS] = json.dumps(
+                [finish_reason]
+            )
+
+        # Latency attributes
+        if state.first_token_time and state.created_time:
+            span_attrs[SpanAttributes.GEN_AI_LATENCY_TIME_TO_FIRST_TOKEN] = (
+                state.first_token_time - state.created_time
+            )
+
+        if state.finished_time and state.created_time:
+            span_attrs[SpanAttributes.GEN_AI_LATENCY_E2E] = (
+                state.finished_time - state.created_time
+            )
+
+        if state.first_token_time_perf and state.finished_time_perf:
+            span_attrs[SpanAttributes.GEN_AI_LATENCY_TIME_IN_MODEL_DECODE] = (
+                state.finished_time_perf - state.first_token_time_perf
+            )
+
+        if state.request_sent_to_scheduler_ts and state.finished_time:
+            span_attrs[SpanAttributes.GEN_AI_LATENCY_TIME_IN_MODEL_INFERENCE] = (
+                state.finished_time - state.request_sent_to_scheduler_ts
+            )
+
+        if state.request_sent_to_scheduler_ts and state.first_token_time:
+            span_attrs[SpanAttributes.GEN_AI_LATENCY_TIME_IN_MODEL_PREFILL] = (
+                state.first_token_time - state.request_sent_to_scheduler_ts
+            )
+
+        return span_attrs
 
 
 class ServerStatus(Enum):
