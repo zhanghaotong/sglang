@@ -22,6 +22,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any, Dict, List, Mapping, Optional
 
 from sglang.srt.utils import get_int_env_var
@@ -283,6 +284,15 @@ def trace_set_thread_info(
     )
 
 
+class TraceLevel(IntEnum):
+    """Trace level for controlling the granularity of tracing."""
+
+    DISABLED = 0  # Completely disable tracing
+    BASIC = 1  # Trace only at the request level, normally one span per request
+    DETAILED = 2  # Trace thread level slices with important events
+    FULL = 3  # Trace all slices including nested ones, typically for debugging
+
+
 class SGLangTraceReqContext:
     def __init__(
         self,
@@ -290,7 +300,7 @@ class SGLangTraceReqContext:
         bootstrap_room=None,
         role="null",
         tracing_enable=False,
-        trace_level=1,
+        trace_level=TraceLevel.BASIC,
         module_name="",
     ):
         self.tracing_enable: bool = tracing_enable and opentelemetry_initialized
@@ -317,7 +327,18 @@ class SGLangTraceReqContext:
     def is_tracing_enabled(self) -> bool:
         return self.tracing_enable
 
+    def _should_trace_detailed(self) -> bool:
+        """Check if detailed tracing is enabled (trace_level > 1)."""
+        return self.tracing_enable and self.trace_level > 1
+
+    def _should_trace_full(self) -> bool:
+        """Check if full tracing is enabled (trace_level > 2)."""
+        return self.tracing_enable and self.trace_level > 2
+
     def __create_thread_context(self, ts: int):
+        if not self._should_trace_detailed():
+            return
+
         if self.pid not in threads_info:
             trace_set_thread_info("unknown")
 
@@ -350,7 +371,7 @@ class SGLangTraceReqContext:
         return thread_context
 
     def trace_get_proc_propagate_context(self) -> Optional[Dict[str, Any]]:
-        if not self.tracing_enable:
+        if not self._should_trace_detailed():
             return None
 
         if not self.root_span_context:
@@ -401,8 +422,10 @@ class SGLangTraceReqContext:
         self.start_time_ns = ts
 
         tracer = threads_info[self.pid].tracer
-        external_trace_context = _trace_context_propagator.extract(
-            external_trace_header
+        external_trace_context = (
+            _trace_context_propagator.extract(external_trace_header)
+            if external_trace_header
+            else None
         )
 
         # Drop the worker_id added by MultiTokenizer
@@ -491,7 +514,7 @@ class SGLangTraceReqContext:
         anonymous: bool = False,
         level: int = 1,
     ):
-        if not self.tracing_enable:
+        if not self._should_trace_detailed():
             return
 
         ts = ts or get_cur_time_ns()
@@ -565,7 +588,7 @@ class SGLangTraceReqContext:
         thread_finish_flag: bool = False,
         level: int = 1,
     ):
-        if not self.tracing_enable:
+        if not self._should_trace_detailed():
             return
 
         if not self.thread_context:
@@ -642,7 +665,7 @@ class SGLangTraceReqContext:
     def trace_event(
         self, name: str, ts: Optional[int] = None, attrs: Dict[str, Any] = None
     ):
-        if not self.tracing_enable:
+        if not self._should_trace_detailed():
             return
 
         if not self.thread_context.cur_slice:

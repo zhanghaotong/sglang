@@ -2509,6 +2509,9 @@ class TokenizerManager(TokenizerCommunicatorMixin):
         """Convert attributes to span attributes."""
         span_attrs = {}
 
+        if self.server_args.trace_level == 0:
+            return span_attrs
+
         # Token usage attributes
         span_attrs[SpanAttributes.GEN_AI_USAGE_COMPLETION_TOKENS] = (
             recv_obj.completion_tokens[i]
