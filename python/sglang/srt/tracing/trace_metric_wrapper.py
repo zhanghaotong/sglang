@@ -36,38 +36,38 @@ class RequestStage:
     # Tokenizer
     TOKENIZE = RequestStageConfig(
         "tokenize",
-        level=1,
+        level=3,
     )
     TOKENIZER_DISPATCH = RequestStageConfig(
         "dispatch",
-        level=2,
+        level=3,
     )
 
     # DP controller
     DC_DISPATCH = RequestStageConfig(
         "dc_dispatch",
-        level=2,
+        level=3,
     )
 
     # common/non-disaggregation
     REQUEST_PROCESS = RequestStageConfig(
         "request_process",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     PREFILL_WAITING = RequestStageConfig(
         "prefill_waiting",
-        level=1,
+        level=3,
         # equal to "observe_queue_time"
         metrics_is_observed=False,
     )
     DECODE_LOOP = RequestStageConfig(
         "decode_loop",
-        level=2,
+        level=3,
     )
     PREFILL_FORWARD = RequestStageConfig(
         "prefill_forward",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     PREFILL_CHUNKED_FORWARD = RequestStageConfig(
@@ -79,48 +79,48 @@ class RequestStage:
     # disaggregation prefill
     PREFILL_PREPARE = RequestStageConfig(
         "prefill_prepare",
-        level=1,
+        level=3,
     )
     PREFILL_BOOTSTRAP = RequestStageConfig(
         "prefill_bootstrap",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     PREFILL_TRANSFER_KV_CACHE = RequestStageConfig(
         "prefill_transfer_kv_cache",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
 
     # disaggregation decode
     DECODE_PREPARE = RequestStageConfig(
         "decode_prepare",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     DECODE_BOOTSTRAP = RequestStageConfig(
         "decode_bootstrap",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     DECODE_WAITING = RequestStageConfig(
         "decode_waiting",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     DECODE_TRANSFERRED = RequestStageConfig(
         "decode_transferred",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     DECODE_FAKE_OUTPUT = RequestStageConfig(
         "fake_output",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
     DECODE_QUICK_FINISH = RequestStageConfig(
         "quick_finish",
-        level=1,
+        level=3,
         metrics_is_observed=True,
     )
 
