@@ -675,7 +675,9 @@ class SGLangTraceReqContext:
         cur_slice = self.thread_context.cur_slice
         ts = ts or get_cur_time_ns()
 
-        if cur_slice.span:
+        if not self._should_trace_full():
+            self.thread_context.thread_span.append(TraceEvent(name, ts, attrs))
+        elif cur_slice.span:
             cur_slice.span.add_event(name=name, timestamp=ts, attributes=attrs)
         else:
             cur_slice.events.append(TraceEvent(name, ts, attrs))

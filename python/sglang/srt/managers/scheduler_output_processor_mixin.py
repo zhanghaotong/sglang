@@ -360,6 +360,7 @@ class SchedulerOutputProcessorMixin:
                 new_accepted_len = len(next_token_id)
 
             req.check_finished(new_accepted_len)
+            req.new_accepted_len = new_accepted_len
 
             if req.finished():
                 if self.server_args.disaggregation_decode_enable_offload_kvcache:

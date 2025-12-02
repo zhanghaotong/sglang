@@ -2099,6 +2099,7 @@ class Scheduler(
     ):
         if batch.forward_mode.is_decode():
             self.process_batch_result_decode(batch, result)
+            trace_event_batch("generate", batch.reqs)
             metric_trace_slice_batch(RequestStage.DECODE_LOOP, batch.reqs)
         elif batch.forward_mode.is_extend():
             if batch.is_dllm():

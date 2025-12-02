@@ -277,9 +277,17 @@ def trace_event_batch(
 
     bid = uuid.uuid4().hex[:8]
     _attrs = {"bid": bid, "batch_size": len(reqs)}
+
     _attrs.update(attrs)
 
+    # more elegant way to do this
     for req in reqs:
+        if name == "generate":
+            _attrs.update(
+                {
+                    "output_ids": req.output_ids,
+                }
+            )
         req.trace_metric_ctx.trace_event(name, ts=ts, attrs=_attrs)
 
 

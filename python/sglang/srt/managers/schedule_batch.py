@@ -505,6 +505,7 @@ class Req:
         self.eos_token_ids = eos_token_ids
         self.vocab_size = vocab_size
         self.priority = priority
+        self.new_accepted_len = 0
 
         # For incremental decoding
         # ----- | --------- read_ids -------|
