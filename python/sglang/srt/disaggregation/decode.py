@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, List, Optional, Type, Union
 import torch
 from torch.distributed import ProcessGroup
 
+from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.configs.mamba_utils import Mamba2CacheParams
 from sglang.srt.constants import GPU_MEMORY_TYPE_KV_CACHE
 from sglang.srt.disaggregation.base import BaseKVManager, BaseKVReceiver, KVPoll
@@ -883,7 +884,7 @@ class SchedulerDisaggregationDecodeMixin:
             ret = self.prepare_mlp_sync_batch(ret)
 
         if ret:
-            trace_event_batch("schedule", ret.reqs)
+            trace_event_batch(EventType.SCHEDULER, ret.reqs)
         return ret
 
     def get_new_prebuilt_batch(self: Scheduler) -> Optional[ScheduleBatch]:

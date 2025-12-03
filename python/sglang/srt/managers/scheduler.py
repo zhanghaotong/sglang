@@ -35,6 +35,7 @@ from torch.cuda import Stream as CudaStream
 from torch.cuda import StreamContext as CudaStreamContext
 from torch.distributed import barrier
 
+from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.configs.model_config import ModelConfig
 from sglang.srt.constrained.base_grammar_backend import (
     INVALID_GRAMMAR_OBJ,
@@ -1697,7 +1698,7 @@ class Scheduler(
             ret = self.prepare_mlp_sync_batch(ret)
 
         if ret:
-            trace_event_batch("schedule", ret.reqs)
+            trace_event_batch(EventType.SCHEDULER, ret.reqs)
 
         return ret
 
@@ -2099,13 +2100,14 @@ class Scheduler(
     ):
         if batch.forward_mode.is_decode():
             self.process_batch_result_decode(batch, result)
-            trace_event_batch("generate", batch.reqs)
+            trace_event_batch(EventType.GENERATE, batch.reqs)
             metric_trace_slice_batch(RequestStage.DECODE_LOOP, batch.reqs)
         elif batch.forward_mode.is_extend():
             if batch.is_dllm():
                 self.process_batch_result_dllm(batch, result)
             else:
                 self.process_batch_result_prefill(batch, result)
+                trace_event_batch(EventType.GENERATE, batch.reqs)
         elif batch.forward_mode.is_prebuilt():
             self.process_batch_result_prebuilt(batch)
         elif batch.forward_mode.is_idle():

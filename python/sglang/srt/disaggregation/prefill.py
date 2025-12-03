@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, List, Optional, Type
 
 import torch
 
+from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.disaggregation.base import BaseKVManager, KVPoll
 from sglang.srt.disaggregation.utils import (
     FAKE_BOOTSTRAP_HOST,
@@ -316,7 +317,7 @@ class SchedulerDisaggregationPrefillMixin:
             batch = self.prepare_mlp_sync_batch(batch)
 
         if batch:
-            trace_event_batch("schedule", batch.reqs)
+            trace_event_batch(EventType.SCHEDULER, batch.reqs)
 
         return batch
 

@@ -17,6 +17,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
+from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.tracing.trace import (
     SGLangTraceReqContext,
     get_cur_time_ns,
@@ -267,7 +268,7 @@ def metric_trace_slice_batch(
 
 
 def trace_event_batch(
-    name: str,
+    event_type: EventType,
     reqs: List,
     ts: Optional[int] = None,
     attrs: Dict[str, Any] = {},
@@ -282,13 +283,8 @@ def trace_event_batch(
 
     # more elegant way to do this
     for req in reqs:
-        if name == "generate":
-            _attrs.update(
-                {
-                    "output_ids": req.output_ids,
-                }
-            )
-        req.trace_metric_ctx.trace_event(name, ts=ts, attrs=_attrs)
+        event_attrs = EventType.process_attrs(event_type, _attrs.copy(), req=req)
+        req.trace_metric_ctx.trace_event(event_type, ts=ts, attrs=event_attrs)
 
 
 """
