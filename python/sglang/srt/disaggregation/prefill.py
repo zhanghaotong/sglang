@@ -27,7 +27,6 @@ from typing import TYPE_CHECKING, List, Optional, Type
 
 import torch
 
-from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.disaggregation.base import BaseKVManager, KVPoll
 from sglang.srt.disaggregation.utils import (
     FAKE_BOOTSTRAP_HOST,
@@ -50,6 +49,7 @@ from sglang.srt.mem_cache.memory_pool import (
     NSATokenToKVPool,
     SWAKVPool,
 )
+from sglang.srt.tracing.trace_event import EventType
 from sglang.srt.tracing.trace_metric_wrapper import RequestStage, trace_event_batch
 from sglang.srt.utils import broadcast_pyobj, point_to_point_pyobj
 

@@ -17,12 +17,12 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.tracing.trace import (
     SGLangTraceReqContext,
     get_cur_time_ns,
     get_opentelemetry_initialized,
 )
+from sglang.srt.tracing.trace_event import EventType
 
 
 @dataclass
@@ -284,7 +284,7 @@ def trace_event_batch(
     # more elegant way to do this
     for req in reqs:
         event_attrs = EventType.process_attrs(event_type, _attrs.copy(), req=req)
-        req.trace_metric_ctx.trace_event(event_type, ts=ts, attrs=event_attrs)
+        req.trace_metric_ctx.trace_event(event_type.name, ts=ts, attrs=event_attrs)
 
 
 """

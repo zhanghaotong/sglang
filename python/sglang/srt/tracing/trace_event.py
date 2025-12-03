@@ -13,11 +13,11 @@
 # ==============================================================================
 """Event handling system for SGLang tracing."""
 
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Dict
 
 
-class EventType(StrEnum):
+class EventType(Enum):
     SCHEDULER = "scheduler"
     GENERATE = "generate"
 
@@ -49,4 +49,4 @@ class EventType(StrEnum):
                 "output_ids": req.output_ids[-req.new_accepted_len :],
             }
         )
-        return None
+        return attrs

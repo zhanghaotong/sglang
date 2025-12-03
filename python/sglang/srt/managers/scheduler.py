@@ -35,7 +35,6 @@ from torch.cuda import Stream as CudaStream
 from torch.cuda import StreamContext as CudaStreamContext
 from torch.distributed import barrier
 
-from python.sglang.srt.tracing.trace_event import EventType
 from sglang.srt.configs.model_config import ModelConfig
 from sglang.srt.constrained.base_grammar_backend import (
     INVALID_GRAMMAR_OBJ,
@@ -160,6 +159,7 @@ from sglang.srt.parser.reasoning_parser import ReasoningParser
 from sglang.srt.server_args import PortArgs, ServerArgs, get_global_server_args
 from sglang.srt.speculative.spec_info import SpeculativeAlgorithm
 from sglang.srt.tracing.trace import process_tracing_init, trace_set_thread_info
+from sglang.srt.tracing.trace_event import EventType
 from sglang.srt.tracing.trace_metric_wrapper import (
     NullContext,
     RequestStage,

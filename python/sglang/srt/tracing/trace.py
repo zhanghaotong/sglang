@@ -668,6 +668,9 @@ class SGLangTraceReqContext:
         if not self._should_trace_detailed():
             return
 
+        if not self.thread_context:
+            return
+
         if not self.thread_context.cur_slice:
             logger.warning(f"No slice is currently being traced.")
             return
